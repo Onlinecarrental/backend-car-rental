@@ -2,6 +2,42 @@ const Homepage = require('../models/Homepage');
 const fs = require('fs').promises;
 const path = require('path');
 
+const defaultSections = {
+  hero: {
+    title: 'Welcome to Car Rental',
+    description: 'Find your perfect ride',
+    image: ''
+  },
+  services: {
+    header: {
+      title: 'Our Services & Benefits',
+      description: 'We provide various services and advantages'
+    },
+    items: []
+  },
+  howItWorks: {
+    header: {
+      title: 'How It Works',
+      description: 'Easy steps to rent a car'
+    },
+    steps: []
+  },
+  whyChoose: {
+    header: {
+      title: 'Why Choose Us',
+      description: 'Best car rental service'
+    },
+    reasons: []
+  },
+  faqs: {
+    header: {
+      title: 'Frequently Asked Questions',
+      description: 'Common questions answered'
+    },
+    items: []
+  }
+};
+
 const homepageController = {
   getAllSections: async (req, res) => {
     try {
@@ -27,22 +63,26 @@ const homepageController = {
 
   getSection: async (req, res) => {
     try {
-      const section = await Homepage.findOne({ 
-        sectionType: req.params.sectionType 
-      });
+      const { sectionType } = req.params;
       
+      let section = await Homepage.findOne({ sectionType });
+      
+      // If section doesn't exist, create it with defaults
       if (!section) {
-        return res.status(404).json({
-          success: false,
-          message: 'Section not found'
+        section = await Homepage.create({
+          sectionType,
+          content: defaultSections[sectionType]
         });
       }
 
       res.json({
         success: true,
-        data: section.content
+        data: {
+          content: section.content
+        }
       });
     } catch (error) {
+      console.error('Error fetching section:', error);
       res.status(500).json({
         success: false,
         message: error.message
@@ -53,54 +93,23 @@ const homepageController = {
   updateSection: async (req, res) => {
     try {
       const { sectionType } = req.params;
-      let content = {};
+      const { content } = req.body;
 
-      if (req.file) {
-        // Handle file upload case
-        const parsedContent = JSON.parse(req.body.content || '{}');
-        content = {
-          ...parsedContent,
-          image: `uploads/homepage/${req.file.filename}`
-        };
-      } else {
-        // Handle JSON content case
-        content = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      }
-
-      // Validate content
-      if (!content) {
-        throw new Error('Content is required');
-      }
-
-      const updatedSection = await Homepage.findOneAndUpdate(
+      const section = await Homepage.findOneAndUpdate(
         { sectionType },
         { content },
-        { 
-          new: true,
-          upsert: true,
-          runValidators: true 
-        }
+        { new: true, upsert: true }
       );
-
-      // Clean up old image if new one was uploaded
-      if (req.file && updatedSection.content.image && updatedSection.content.image !== content.image) {
-        await fs.unlink(path.join(__dirname, '..', updatedSection.content.image))
-          .catch(console.error);
-      }
 
       res.json({
         success: true,
-        message: 'Section updated successfully',
-        data: updatedSection
+        data: {
+          content: section.content
+        }
       });
-
     } catch (error) {
-      // Clean up uploaded file if save fails
-      if (req.file) {
-        await fs.unlink(req.file.path).catch(console.error);
-      }
-      
-      res.status(400).json({
+      console.error('Error updating section:', error);
+      res.status(500).json({
         success: false,
         message: error.message
       });

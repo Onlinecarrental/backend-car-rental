@@ -51,4 +51,12 @@ router.get('/', homepageController.getAllSections);
 router.get('/:sectionType', validateSection, homepageController.getSection);
 router.patch('/:sectionType', validateSection, upload.single('image'), homepageController.updateSection);
 
+// Add default route handler
+router.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Homepage section not found'
+  });
+});
+
 module.exports = router;
