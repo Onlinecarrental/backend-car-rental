@@ -93,7 +93,29 @@ const homepageController = {
   updateSection: async (req, res) => {
     try {
       const { sectionType } = req.params;
-      const { content } = req.body;
+      let content;
+
+      if (req.file) {
+        // Parse the content from form data
+        content = JSON.parse(req.body.content);
+        
+        // Create image path relative to uploads directory
+        const imagePath = `uploads/homepage/${req.file.filename}`;
+        
+        // Update content with new image path
+        content = {
+          ...content,
+          image: imagePath
+        };
+
+        console.log('Updating with image:', {
+          sectionType,
+          imagePath,
+          content
+        });
+      } else {
+        content = req.body.content;
+      }
 
       const section = await Homepage.findOneAndUpdate(
         { sectionType },
@@ -101,6 +123,7 @@ const homepageController = {
         { new: true, upsert: true }
       );
 
+      // Return the full content including image path
       res.json({
         success: true,
         data: {
@@ -109,6 +132,11 @@ const homepageController = {
       });
     } catch (error) {
       console.error('Error updating section:', error);
+      // Cleanup uploaded file if there's an error
+      if (req.file) {
+        const filePath = path.join(__dirname, '..', 'uploads/homepage', req.file.filename);
+        fs.unlink(filePath).catch(err => console.error('File cleanup failed:', err));
+      }
       res.status(500).json({
         success: false,
         message: error.message
