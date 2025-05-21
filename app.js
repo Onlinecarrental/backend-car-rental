@@ -12,6 +12,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const homepageRoutes = require('./routes/homepageRoutes');
 const aboutRoutes = require('./routes/aboutRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
@@ -45,7 +46,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'healthy',
     timestamp: new Date().toISOString()
   });
@@ -59,6 +60,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/homepage', homepageRoutes);
 app.use('/api/about', aboutRoutes);
+app.use('/api/chats', chatRoutes);
 
 // 404 handler - comes after routes
 app.use((req, res, next) => {
@@ -80,8 +82,8 @@ app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     return res.status(400).json({
       success: false,
-      message: err.code === 'LIMIT_FILE_SIZE' 
-        ? 'File size is too large' 
+      message: err.code === 'LIMIT_FILE_SIZE'
+        ? 'File size is too large'
         : 'File upload error',
       error: err.message
     });
