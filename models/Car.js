@@ -18,7 +18,10 @@ const carSchema = new mongoose.Schema({
   image1: { type: String },
   image2: { type: String },
   image3: { type: String },
-  image4: { type: String }
+  image4: { type: String },
+  agentId: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 }, {
   timestamps: true
 });

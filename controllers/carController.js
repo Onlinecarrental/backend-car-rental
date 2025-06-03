@@ -12,8 +12,19 @@ const carController = {
         });
       }
 
+      // Get agentId from any of the possible field names
+      const agentId = req.body.agentId || req.body.agent_id || req.body.agent || req.body.userId || req.body.user_id;
+      
+      if (!agentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Agent ID is required'
+        });
+      }
+
       const carData = {
         ...req.body,
+        agentId, // Add agentId to car data
         features: JSON.parse(req.body.features || '{}'),
         coverImage: req.files['coverImage'][0].path.replace(/\\/g, '/'),
         ...(req.files['image1'] && { image1: req.files['image1'][0].path.replace(/\\/g, '/') }),
