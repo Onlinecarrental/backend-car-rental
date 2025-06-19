@@ -136,3 +136,42 @@ exports.getAllAgents = async (req, res) => {
         });
     }
 };
+
+// Get a specific chat by ID
+exports.getChatById = async (req, res) => {
+    try {
+        const { chatId } = req.params;
+
+        // Validate chatId
+        if (!mongoose.Types.ObjectId.isValid(chatId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid chat ID'
+            });
+        }
+
+        // Find the chat and populate user and agent details
+        const chat = await Chat.findById(chatId)
+            .populate('userId', 'name email')
+            .populate('agentId', 'name email');
+
+        if (!chat) {
+            return res.status(404).json({
+                success: false,
+                message: 'Chat not found'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: chat
+        });
+    } catch (error) {
+        console.error('Error fetching chat:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+};
